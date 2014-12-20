@@ -1,0 +1,10 @@
+#!/bin/bash
+
+host=`relation-get private-address`
+app_name=`config-get app_name`
+sudo service mongodb stop
+
+juju-log "Stopping my-site..."
+sudo service my-site stop
+
+sudo shutdown now

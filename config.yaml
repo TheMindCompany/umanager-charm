@@ -1,0 +1,45 @@
+options:
+  app_name:
+    type: string
+    default: umanager
+    description: Application Name
+  app_port:
+    type: int
+    default: 80
+    description: Port where the application will handle requests
+  app_scm:
+    type: string
+    default: git
+    description: Repository type (git/bzr/local)
+  app_url:
+    type: string
+    default: "https://github.com/TheMindCompany/umanager"
+    description: Application repository URL
+  app_branch:
+    type: string
+    default: demo
+    description: Application repository deployment branch. Might also be a revision ID (e.g. tag or SHA1 for git) to upgrade/downgrade application.
+  polling_schedule:
+    type: string
+    default: "0,30 * * * *"
+    description: Set to a cron schedule string (e.g. "*/5 * * * *" poll each 5 minutes) for polling repo for updates and deploy if new branch contents is found. Set to empty to disable polling.
+  install_root:
+    type: string
+    default: /opt
+    description: Install the application in app_name under this directory
+  app_user:
+    type: string
+    default: ubuntu
+    description: run-as user
+  app_node_env:
+    type: string
+    default: development
+    description: The node environment to run as ("production", "development", "test" etc.).
+  node_ver:
+    type: string
+    default: "0.10.34"
+    description: Node.js version number to use(Stable releases only).  If empty will default to PPA version.
+  node_server:
+    type: string
+    default: "server.js"
+    description: Node server file that will be launched.

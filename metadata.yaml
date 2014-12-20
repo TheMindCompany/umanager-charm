@@ -1,0 +1,12 @@
+name: umanager
+summary: "Deploy a node.js based University Management System."
+description: "An open-source development project for a cloud based university management software system. This projects goal is to create a component based structure that allows small and large universities to quickly extend and implement. Design practices focus on mobile & special needs accessibility with scalability in place."
+categories:
+    - app-servers
+maintainer: Brandon Clark <support@themindspot.com>
+requires:
+  mongodb:
+    interface: mongodb
+provides:
+  website:
+    interface: http

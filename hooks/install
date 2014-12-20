@@ -1,0 +1,134 @@
+#!/bin/bash
+
+set -eu # -x for verbose logging to juju debug-log
+
+umask 002
+
+install_root=`config-get install_root`
+app_name=`config-get app_name`
+app_dir="$install_root/$app_name"
+app_user=`config-get app_user`
+app_scm=`config-get app_scm`
+app_url=`config-get app_url`
+app_branch=`config-get app_branch`
+app_port=`config-get app_port`
+node_ver=`config-get node_ver`
+node_server=`config-get node_server`
+node_dir="/usr/local"
+site_dir="$install_root/$app_name"
+
+apt-get -y install -qq build-essential libcap2-bin
+juju-log "Done Setting up build and launch tools"
+
+if [ ${node_ver} = "" ];then  
+  node_dir="/usr"
+fi
+
+compress() {
+  juju-log "Compressing File " 
+  tar -cvzf ${app_name}.tar.gz ${app_name}
+}
+
+decompress() { 
+  juju-log "Decompressing File "
+  tar -xvzf ${app_name}.tar.gz
+}
+
+install_node_ppa() {
+  juju-log "Installing node.js from PPA..."
+  apt-get -y install -qq curl python-software-properties
+  add-apt-repository ppa:chris-lea/node.js
+  apt-get update
+  apt-get -y install -qq nodejs
+}
+
+install_node() {
+  juju-log "Installing node.js from source..."
+  tar -xvzf node-v${node_ver}.tar.gz
+  cd node-v${node_ver}
+  ./configure
+  make
+  sudo make install
+}
+
+install_node_check() {
+  if [ ${node_ver} != "" ]; then 
+    juju-log "Starting node.js install..."
+    wget http://nodejs.org/dist/v${node_ver}/node-v${node_ver}.tar.gz
+    install_node
+  else
+    install_node_ppa
+  fi
+}
+[[ -x ${node_dir}/bin/node ]] || install_node_check
+
+install_mongodb() {
+  apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+  echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/10gen.list
+  apt-get update
+  apt-get -y install -qq mongodb-10gen
+}
+[[ -x /usr/bin/mongo ]] || install_mongodb
+
+default_db_values() {
+  juju-log "Adding default data..."
+  mongo << EOF
+use user
+db.users.insert({first:'CM',last:'Administrator',type:'admin',email:'cmadmin@localhost', active: true, password:'\$2a\$10\$YzMafNGEOUPTAXCZ2PDsh..dmKY3zidDOEVVOJfEz4G0JImrlvUEa'})
+db.users.insert({first:'CM',last:'Teacher',type:'teacher',email:'cmteach@localhost', active: true, password:'\$2a\$10\$YzMafNGEOUPTAXCZ2PDsh..dmKY3zidDOEVVOJfEz4G0JImrlvUEa'})
+use school
+db.subjects.insert({code: "MIS", name: "Management Information Systems", description: "The study of how individuals, groups, and organizations evaluate, design, implement, manage, and utilize systems to generate information to improve efficiency and effectiveness of decision making, including systems termed decision support systems, expert systems, and executive information systems."})
+db.subjects.insert({code: "CIS", name: "Computer Information Systems", description: "Focus is on practical applications of technology to support organizations while adding value to their offerings."})
+EOF
+}
+
+setup_site() {
+
+  juju-log "Setting up ${app_name}..."
+  if [ ${app_scm} != "local" ];then
+    juju-log "Cloning git repository..."
+    apt-get -y install -qq git-core
+    git clone ${app_url} ${site_dir} -b master
+    sleep 10
+  else
+    juju-log "Copying ${app_name} directory..."
+    cp --recursive $CHARM_DIR/${app_name}/${app_name}.tar.gz /opt
+    cd /opt
+    decompress
+    cd -
+  fi
+
+  chown -Rf ubuntu.ubuntu ${site_dir}
+
+  if [ -f ${site_dir}/package.json ]; then
+    juju-log "NPM installing ${app_name} dependecies..."
+    cd ${site_dir} && sudo npm install
+  fi
+
+  cat > /etc/init/my-site.conf <<EOS
+description "${app_name} Node Server Application"
+
+start on (net-device-up
+          and local-filesystems
+          and runlevel [2345])
+stop on runlevel [!2345]
+
+expect fork
+respawn
+ 
+script
+  export HOME=/
+  export NODE_PATH=${node_dir}/lib/node_modules
+  exec ${node_dir}/bin/node ${site_dir}/${node_server} >> /var/log/${app_name}.log 2>&1 &
+end script
+EOS
+}
+[[ -d ${site_dir} ]] || setup_site
+
+
+open-port 80/TCP
+open-port 443/TCP
+
+default_db_values
+
+setcap 'cap_net_bind_service=+ep' ${node_dir}/bin/node

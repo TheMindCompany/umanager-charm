@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -eu # -x for verbose logging to juju debug-log
+
+umask 002
+
+juju-log "Restarting my-site..."
+sudo service my-site restart

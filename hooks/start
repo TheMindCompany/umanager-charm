@@ -1,0 +1,6 @@
+#!/bin/bash
+
+app_name=`config-get app_name`
+# delay startup until mongo joins
+juju-log "Starting my-site..."
+sudo service my-site restart || sudo service my-site start
