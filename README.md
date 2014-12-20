@@ -1,8 +1,8 @@
 UManager Charm
 ==============
-An Canonical Open Stack Juju Charm configuration for the UManager project. The aim of this project is to provide a mechanism for the UManger software System to operate on the Canonical Open Stack network.
+A Canonical Open Stack Juju Charm configuration for the [UManager](https://github.com/TheMindCompany/umanager) project. The aim of this project is to provide a mechanism for the [UManager](https://github.com/TheMindCompany/umanager) software system to operate on the Canonical Open Stack network.
 
-An open-source development project for a cloud based university management software system.  This projects goal is to create a component based structure that allows small and large universities to quickly extend and implement.  Design practices focus on mobile & special needs accessibility with scalability in place.
+[UManager](https://github.com/TheMindCompany/umanager) is an open-source development project for a cloud based university management software system.  This projects goal is to create a component based structure that allows small and large universities to quickly extend and implement.  Design practices focus on mobile & special needs accessibility with scalability in place.
 
 ### Contribute
 Please read through our [contributing guidelines](https://github.com/TheMindCompany/umanager-charm/blob/master/docs/contribute.md). Included are directions for opening issues, coding standards, and notes on development.
